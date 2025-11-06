@@ -1,491 +1,73 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pixel Painter</title>
-  <style>
-    :root{
-      --bg:#0f1724;
-      --panel:#0b1220;
-      --muted:#94a3b8;
-      --accent:#06b6d4;
-      --cell-size:20px; /* default, bisa diubah lewat JS */
-    }
-
-    /* Reset sederhana */
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:Inter, system-ui, sans-serif;
-      background:linear-gradient(180deg, #071124 0%, #07121a 100%);
-      color:#e6eef8;
-      padding:18px;
-      display:flex;
-      gap:18px;
-      min-height:100vh;
-      align-items:flex-start;
-      justify-content:center;
-    }
-
-    /* Kontainer utama */
-    .app{
-      display:flex;
-      gap:18px;
-      width:1100px;
-      max-width:calc(100vw - 36px);
-    }
-
-    /* Panel kiri: toolbar */
-    .panel{
-      width:320px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.03);
-      padding:16px;
-      border-radius:12px;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.6);
-    }
-
-    .panel h1{
-      font-size:18px;
-      margin-bottom:8px;
-      letter-spacing:0.3px;
-    }
-
-    .panel .section{
-      margin-top:12px;
-    }
-
-    .row{
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-
-    label{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    input[type="range"]{
-      width:100%;
-    }
-
-    .color-preview{
-      width:44px;
-      height:44px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.06);
-      flex-shrink:0;
-    }
-
-    .controls{
-      margin-top:12px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    button.btn{
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.06);
-      padding:8px 10px;
-      border-radius:8px;
-      color:var(--muted);
-      cursor:pointer;
-      font-size:13px;
-      min-width:80px;
-    }
-    button.btn.primary{
-      background:linear-gradient(90deg,#06b6d4,#06a6f0);
-      color:#042027;
-      border:0;
-      box-shadow:0 6px 12px rgba(6,182,212,0.12);
-    }
-
-    .toggle{
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-    }
-
-    /* Panel kanan: area gambar */
-    .canvas-wrap{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .canvas-toolbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-    }
-
-    .canvas-area{
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-      border-radius:12px;
-      padding:12px;
-      border:1px solid rgba(255,255,255,0.03);
-      overflow:auto;
-      max-height:72vh;
-    }
-
-    /* Grid container */
-    .grid{
-      display:grid;
-      /* grid-template-columns akan di-set via JS sesuai ukuran */
-      gap:1px; /* garis antar pixel */
-      background:rgba(255,255,255,0.03);
-      padding:1px;
-      border-radius:8px;
-    }
-
-    /* Sel pixel */
-    .cell{
-      width:var(--cell-size);
-      height:var(--cell-size);
-      background:transparent;
-      user-select:none;
-      -webkit-user-select:none;
-    }
-
-    .cell[data-filled="true"]{
-      /* warna ditetapkan inline via style="background:..." di JS */
-    }
-
-    /* Tampilan mobile / kecil */
-    @media (max-width:960px){
-      .app{flex-direction:column; width:100%}
-      .panel{width:100%}
-      .canvas-wrap{width:100%}
-    }
-
-    /* Footer kecil */
-    .hint{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--muted);
-    }
-
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <div class="app">
-    <!-- Panel kiri: toolbar -->
-    <aside class="panel" aria-label="Toolbar Pixel Painter">
+
+    <!-- Panel kiri -->
+    <aside class="panel">
       <h1>Pixel Painter</h1>
+
       <div class="section">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <div>
-            <label for="grid-size">Ukuran grid</label>
-            <div style="font-size:13px;color:var(--muted)"><span id="grid-size-label">32</span> × <span id="grid-size-label-2">32</span></div>
-          </div>
-        </div>
-        <input id="grid-size" type="range" min="8" max="64" value="32" />
+        <label>Grid Size</label>
+        <div class="info"><span id="gs1">32</span> × <span id="gs2">32</span></div>
+        <input id="grid-size" type="range" min="8" max="64" value="32">
       </div>
 
       <div class="section">
-        <label for="cell-size">Ukuran pixel (px)</label>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
-          <input id="cell-size" type="range" min="8" max="40" value="20" />
-          <div style="font-size:13px;color:var(--muted)"><span id="cell-size-label">20</span>px</div>
-        </div>
+        <label>Pixel Size</label>
+        <input id="cell-size" type="range" min="8" max="40" value="20">
+        <div class="info"><span id="ps">20</span>px</div>
       </div>
 
       <div class="section">
-        <label>Warna & alat</label>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-          <input id="color-picker" type="color" value="#06b6d4" title="Pilih warna"/>
-          <div class="color-preview" id="color-preview" style="background:#06b6d4"></div>
-
-          <div style="display:flex;flex-direction:column;gap:6px;margin-left:8px;">
-            <button class="btn" id="brush-btn">Brush</button>
-            <button class="btn" id="eraser-btn">Eraser</button>
-          </div>
-        </div>
+        <label>Color</label>
+        <input id="color-picker" type="color" value="#06b6d4">
+        <div id="color-preview" class="color-preview"></div>
       </div>
 
       <div class="section">
-        <label>Mode & aksi</label>
-        <div class="controls">
-          <button class="btn" id="fill-btn">Fill</button>
-          <button class="btn" id="clear-btn">Clear</button>
-          <button class="btn" id="undo-btn">Undo</button>
-          <button class="btn" id="redo-btn">Redo</button>
-          <button class="btn primary" id="save-btn">Save PNG</button>
-        </div>
+        <button id="brush-btn" class="btn">Brush</button>
+        <button id="eraser-btn" class="btn">Eraser</button>
+        <button id="fill-btn" class="btn">Fill</button>
       </div>
 
       <div class="section">
-        <label>Opsi tampilan</label>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-          <input type="checkbox" id="show-grid" checked />
-          <label for="show-grid" style="margin-left:4px">Tampilkan garis</label>
-        </div>
+        <button id="undo-btn" class="btn">Undo</button>
+        <button id="redo-btn" class="btn">Redo</button>
+        <button id="clear-btn" class="btn">Clear</button>
       </div>
 
-      <div class="hint">Tip: Klik-drag untuk menggambar. Gunakan slider untuk ubah ukuran grid atau pixel.</div>
+      <div class="section">
+        <button id="save-btn" class="btn primary">Save PNG</button>
+        <button id="export-json-btn" class="btn">Export JSON</button>
+        <button id="import-json-btn" class="btn">Import JSON</button>
+        <input type="file" id="json-file-input" accept="application/json" hidden>
+      </div>
+
+      <div class="section">
+        <label>
+          <input type="checkbox" id="show-grid" checked>
+          Show Grid
+        </label>
+      </div>
     </aside>
 
-    <!-- Panel kanan: area gambar -->
+    <!-- Panel kanan -->
     <main class="canvas-wrap">
-      <div class="canvas-toolbar">
-        <div>
-          <strong id="project-title">Untitled</strong>
-          <div style="font-size:12px;color:var(--muted)">Canvas pixel art</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <label style="font-size:13px;color:var(--muted);margin-right:6px">Zoom</label>
-          <input type="range" id="zoom" min="25" max="200" value="100" />
-        </div>
-      </div>
-
-      <div class="canvas-area" id="canvas-area" tabindex="0" aria-label="Pixel canvas">
-        <!-- Grid akan dibuat di sini oleh JavaScript -->
+      <div class="canvas-area">
         <div id="grid" class="grid"></div>
       </div>
     </main>
+
   </div>
 
-  <script>
-/* ===============================
-   Variabel & Elemen DOM
-================================*/
-const gridEl = document.getElementById("grid");
-const gridSizeSlider = document.getElementById("grid-size");
-const gridSizeLabel = document.getElementById("grid-size-label");
-const gridSizeLabel2 = document.getElementById("grid-size-label-2");
-
-const cellSizeSlider = document.getElementById("cell-size");
-const cellSizeLabel = document.getElementById("cell-size-label");
-
-const colorPicker = document.getElementById("color-picker");
-const colorPreview = document.getElementById("color-preview");
-
-const brushBtn = document.getElementById("brush-btn");
-const eraserBtn = document.getElementById("eraser-btn");
-const fillBtn = document.getElementById("fill-btn");
-const clearBtn = document.getElementById("clear-btn");
-const undoBtn = document.getElementById("undo-btn");
-const redoBtn = document.getElementById("redo-btn");
-const saveBtn = document.getElementById("save-btn");
-
-const zoomSlider = document.getElementById("zoom");
-const showGridCheck = document.getElementById("show-grid");
-
-let gridSize = 32;
-let cellSize = 20;
-
-let painting = false;
-let mode = "brush";  // brush | eraser | fill
-let undoStack = [];
-let redoStack = [];
-
-
-/* ===============================
-   Membuat Grid Pixel
-================================*/
-function generateGrid() {
-  gridEl.innerHTML = "";
-  gridEl.style.gridTemplateColumns = `repeat(${gridSize}, var(--cell-size))`;
-
-  for (let i = 0; i < gridSize * gridSize; i++) {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.dataset.index = i;
-    cell.dataset.filled = "false";
-
-    // event: klik & drag
-    cell.addEventListener("mousedown", paint);
-    cell.addEventListener("mouseover", (e) => {
-      if (painting) paint(e);
-    });
-
-    gridEl.appendChild(cell);
-  }
-}
-
-
-/* ===============================
-   Menggambar pixel
-================================*/
-function paint(e) {
-  const cell = e.target;
-  pushUndo(); // simpan untuk undo
-
-  if (mode === "brush") {
-    cell.style.background = colorPicker.value;
-    cell.dataset.filled = "true";
-  } else if (mode === "eraser") {
-    cell.style.background = "transparent";
-    cell.dataset.filled = "false";
-  }
-}
-
-
-/* ===============================
-   Fill bucket (Flood Fill)
-================================*/
-function fillArea(startCell) {
-  const targetColor = startCell.style.background || "transparent";
-  const newColor = colorPicker.value;
-
-  if (targetColor === newColor) return;
-
-  const index = Number(startCell.dataset.index);
-
-  const queue = [index];
-  const visited = new Set();
-
-  const getCell = (i) => gridEl.children[i];
-
-  pushUndo();
-
-  while (queue.length) {
-    const i = queue.shift();
-    if (visited.has(i)) continue;
-    visited.add(i);
-
-    const cell = getCell(i);
-    if (!cell) continue;
-
-    if ((cell.style.background || "transparent") === targetColor) {
-      cell.style.background = newColor;
-      cell.dataset.filled = "true";
-
-      const row = Math.floor(i / gridSize);
-      const col = i % gridSize;
-
-      if (col > 0) queue.push(i - 1);
-      if (col < gridSize - 1) queue.push(i + 1);
-      if (row > 0) queue.push(i - gridSize);
-      if (row < gridSize - 1) queue.push(i + gridSize);
-    }
-  }
-}
-
-
-/* ===============================
-   Undo & Redo
-================================*/
-function saveState() {
-  return Array.from(gridEl.children).map(c => c.style.background || "");
-}
-
-function loadState(state) {
-  Array.from(gridEl.children).forEach((c, i) => {
-    c.style.background = state[i];
-    c.dataset.filled = state[i] ? "true" : "false";
-  });
-}
-
-function pushUndo() {
-  undoStack.push(saveState());
-  redoStack = [];
-}
-
-undoBtn.onclick = () => {
-  if (!undoStack.length) return;
-  redoStack.push(saveState());
-  const prev = undoStack.pop();
-  loadState(prev);
-};
-
-redoBtn.onclick = () => {
-  if (!redoStack.length) return;
-  undoStack.push(saveState());
-  const next = redoStack.pop();
-  loadState(next);
-};
-
-
-/* ===============================
-   Clear canvas
-================================*/
-clearBtn.onclick = () => {
-  pushUndo();
-  Array.from(gridEl.children).forEach(c => {
-    c.style.background = "transparent";
-    c.dataset.filled = "false";
-  });
-};
-
-
-/* ===============================
-   Save PNG
-================================*/
-saveBtn.onclick = () => {
-  const canvas = document.createElement("canvas");
-  canvas.width = gridSize;
-  canvas.height = gridSize;
-
-  const ctx = canvas.getContext("2d");
-
-  Array.from(gridEl.children).forEach((c, i) => {
-    const x = i % gridSize;
-    const y = Math.floor(i / gridSize);
-
-    ctx.fillStyle = c.style.background || "transparent";
-    ctx.fillRect(x, y, 1, 1);
-  });
-
-  const link = document.createElement("a");
-  link.download = "pixel-art.png";
-  link.href = canvas.toDataURL();
-  link.click();
-};
-
-
-/* ===============================
-   Event Listeners
-================================*/
-window.addEventListener("mousedown", () => (painting = true));
-window.addEventListener("mouseup", () => (painting = false));
-
-gridEl.addEventListener("click", (e) => {
-  if (mode === "fill") fillArea(e.target);
-});
-
-gridSizeSlider.oninput = () => {
-  gridSize = Number(gridSizeSlider.value);
-  gridSizeLabel.innerText = gridSize;
-  gridSizeLabel2.innerText = gridSize;
-  generateGrid();
-};
-
-cellSizeSlider.oninput = () => {
-  cellSize = Number(cellSizeSlider.value);
-  cellSizeLabel.innerText = cellSize;
-  document.documentElement.style.setProperty("--cell-size", cellSize + "px");
-};
-
-colorPicker.oninput = () => {
-  colorPreview.style.background = colorPicker.value;
-};
-
-brushBtn.onclick = () => (mode = "brush");
-eraserBtn.onclick = () => (mode = "eraser");
-fillBtn.onclick = () => (mode = "fill");
-
-zoomSlider.oninput = () => {
-  gridEl.style.transform = `scale(${zoomSlider.value / 100})`;
-  gridEl.style.transformOrigin = "0 0";
-};
-
-showGridCheck.onchange = () => {
-  gridEl.style.gap = showGridCheck.checked ? "1px" : "0px";
-};
-
-
-/* ===============================
-   Inisialisasi awal
-================================*/
-generateGrid();
-document.documentElement.style.setProperty("--cell-size", cellSize + "px");
-</script>
-
+  <script src="app.js"></script>
 </body>
 </html>
