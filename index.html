@@ -1,71 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Pixel Painter</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <div class="app">
-
-    <!-- Panel kiri -->
-    <aside class="panel">
+    <aside class="panel" aria-label="Toolbar Pixel Painter">
       <h1>Pixel Painter</h1>
 
       <div class="section">
-        <label>Grid Size</label>
-        <div class="info"><span id="gs1">32</span> × <span id="gs2">32</span></div>
-        <input id="grid-size" type="range" min="8" max="64" value="32">
+        <label for="grid-size">Ukuran grid</label>
+        <div class="small-info"><span id="grid-size-label">32</span> × <span id="grid-size-label-2">32</span></div>
+        <input id="grid-size" type="range" min="8" max="64" value="32" />
       </div>
 
       <div class="section">
-        <label>Pixel Size</label>
-        <input id="cell-size" type="range" min="8" max="40" value="20">
-        <div class="info"><span id="ps">20</span>px</div>
+        <label for="cell-size">Ukuran pixel (px)</label>
+        <div class="row">
+          <input id="cell-size" type="range" min="8" max="40" value="20" />
+          <div class="small-info"><span id="cell-size-label">20</span>px</div>
+        </div>
       </div>
 
       <div class="section">
-        <label>Color</label>
-        <input id="color-picker" type="color" value="#06b6d4">
-        <div id="color-preview" class="color-preview"></div>
+        <label>Warna & alat</label>
+        <div class="row" style="align-items:center">
+          <input id="color-picker" type="color" value="#06b6d4" />
+          <div id="color-preview" class="color-preview"></div>
+        </div>
+
+        <div class="row buttons">
+          <button id="brush-btn" class="btn">Brush</button>
+          <button id="eraser-btn" class="btn">Eraser</button>
+          <button id="fill-btn" class="btn">Fill</button>
+        </div>
       </div>
 
       <div class="section">
-        <button id="brush-btn" class="btn">Brush</button>
-        <button id="eraser-btn" class="btn">Eraser</button>
-        <button id="fill-btn" class="btn">Fill</button>
+        <label>Actions</label>
+        <div class="row buttons">
+          <button id="undo-btn" class="btn">Undo</button>
+          <button id="redo-btn" class="btn">Redo</button>
+          <button id="clear-btn" class="btn">Clear</button>
+        </div>
+        <div class="row buttons">
+          <button id="save-btn" class="btn primary">Save PNG</button>
+          <button id="save-svg-btn" class="btn">Save SVG</button>
+        </div>
+        <div class="row buttons">
+          <button id="export-json-btn" class="btn">Export JSON</button>
+          <button id="import-json-btn" class="btn">Import JSON</button>
+          <input id="json-file-input" type="file" accept="application/json" style="display:none" />
+        </div>
       </div>
 
       <div class="section">
-        <button id="undo-btn" class="btn">Undo</button>
-        <button id="redo-btn" class="btn">Redo</button>
-        <button id="clear-btn" class="btn">Clear</button>
+        <label>Opsi tampilan</label>
+        <div class="row">
+          <input id="show-grid" type="checkbox" checked />
+          <label for="show-grid">Tampilkan garis</label>
+        </div>
+        <div class="row">
+          <label for="zoom">Zoom</label>
+          <input id="zoom" type="range" min="25" max="300" value="100" />
+        </div>
       </div>
 
-      <div class="section">
-        <button id="save-btn" class="btn primary">Save PNG</button>
-        <button id="export-json-btn" class="btn">Export JSON</button>
-        <button id="import-json-btn" class="btn">Import JSON</button>
-        <input type="file" id="json-file-input" accept="application/json" hidden>
-      </div>
-
-      <div class="section">
-        <label>
-          <input type="checkbox" id="show-grid" checked>
-          Show Grid
-        </label>
-      </div>
+      <div class="hint">Tip: Klik-drag untuk menggambar. Save PNG menghasilkan gambar HD agar tidak pecah.</div>
     </aside>
 
-    <!-- Panel kanan -->
     <main class="canvas-wrap">
-      <div class="canvas-area">
+      <div class="canvas-area" id="canvas-area" tabindex="0" aria-label="Pixel canvas">
         <div id="grid" class="grid"></div>
       </div>
     </main>
-
   </div>
 
   <script src="app.js"></script>
