@@ -251,7 +251,241 @@
   </div>
 
   <script>
-    /* Script akan ditambahkan di langkah berikutnya (JS interaktivitas) */
-  </script>
+/* ===============================
+   Variabel & Elemen DOM
+================================*/
+const gridEl = document.getElementById("grid");
+const gridSizeSlider = document.getElementById("grid-size");
+const gridSizeLabel = document.getElementById("grid-size-label");
+const gridSizeLabel2 = document.getElementById("grid-size-label-2");
+
+const cellSizeSlider = document.getElementById("cell-size");
+const cellSizeLabel = document.getElementById("cell-size-label");
+
+const colorPicker = document.getElementById("color-picker");
+const colorPreview = document.getElementById("color-preview");
+
+const brushBtn = document.getElementById("brush-btn");
+const eraserBtn = document.getElementById("eraser-btn");
+const fillBtn = document.getElementById("fill-btn");
+const clearBtn = document.getElementById("clear-btn");
+const undoBtn = document.getElementById("undo-btn");
+const redoBtn = document.getElementById("redo-btn");
+const saveBtn = document.getElementById("save-btn");
+
+const zoomSlider = document.getElementById("zoom");
+const showGridCheck = document.getElementById("show-grid");
+
+let gridSize = 32;
+let cellSize = 20;
+
+let painting = false;
+let mode = "brush";  // brush | eraser | fill
+let undoStack = [];
+let redoStack = [];
+
+
+/* ===============================
+   Membuat Grid Pixel
+================================*/
+function generateGrid() {
+  gridEl.innerHTML = "";
+  gridEl.style.gridTemplateColumns = `repeat(${gridSize}, var(--cell-size))`;
+
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    cell.dataset.filled = "false";
+
+    // event: klik & drag
+    cell.addEventListener("mousedown", paint);
+    cell.addEventListener("mouseover", (e) => {
+      if (painting) paint(e);
+    });
+
+    gridEl.appendChild(cell);
+  }
+}
+
+
+/* ===============================
+   Menggambar pixel
+================================*/
+function paint(e) {
+  const cell = e.target;
+  pushUndo(); // simpan untuk undo
+
+  if (mode === "brush") {
+    cell.style.background = colorPicker.value;
+    cell.dataset.filled = "true";
+  } else if (mode === "eraser") {
+    cell.style.background = "transparent";
+    cell.dataset.filled = "false";
+  }
+}
+
+
+/* ===============================
+   Fill bucket (Flood Fill)
+================================*/
+function fillArea(startCell) {
+  const targetColor = startCell.style.background || "transparent";
+  const newColor = colorPicker.value;
+
+  if (targetColor === newColor) return;
+
+  const index = Number(startCell.dataset.index);
+
+  const queue = [index];
+  const visited = new Set();
+
+  const getCell = (i) => gridEl.children[i];
+
+  pushUndo();
+
+  while (queue.length) {
+    const i = queue.shift();
+    if (visited.has(i)) continue;
+    visited.add(i);
+
+    const cell = getCell(i);
+    if (!cell) continue;
+
+    if ((cell.style.background || "transparent") === targetColor) {
+      cell.style.background = newColor;
+      cell.dataset.filled = "true";
+
+      const row = Math.floor(i / gridSize);
+      const col = i % gridSize;
+
+      if (col > 0) queue.push(i - 1);
+      if (col < gridSize - 1) queue.push(i + 1);
+      if (row > 0) queue.push(i - gridSize);
+      if (row < gridSize - 1) queue.push(i + gridSize);
+    }
+  }
+}
+
+
+/* ===============================
+   Undo & Redo
+================================*/
+function saveState() {
+  return Array.from(gridEl.children).map(c => c.style.background || "");
+}
+
+function loadState(state) {
+  Array.from(gridEl.children).forEach((c, i) => {
+    c.style.background = state[i];
+    c.dataset.filled = state[i] ? "true" : "false";
+  });
+}
+
+function pushUndo() {
+  undoStack.push(saveState());
+  redoStack = [];
+}
+
+undoBtn.onclick = () => {
+  if (!undoStack.length) return;
+  redoStack.push(saveState());
+  const prev = undoStack.pop();
+  loadState(prev);
+};
+
+redoBtn.onclick = () => {
+  if (!redoStack.length) return;
+  undoStack.push(saveState());
+  const next = redoStack.pop();
+  loadState(next);
+};
+
+
+/* ===============================
+   Clear canvas
+================================*/
+clearBtn.onclick = () => {
+  pushUndo();
+  Array.from(gridEl.children).forEach(c => {
+    c.style.background = "transparent";
+    c.dataset.filled = "false";
+  });
+};
+
+
+/* ===============================
+   Save PNG
+================================*/
+saveBtn.onclick = () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = gridSize;
+  canvas.height = gridSize;
+
+  const ctx = canvas.getContext("2d");
+
+  Array.from(gridEl.children).forEach((c, i) => {
+    const x = i % gridSize;
+    const y = Math.floor(i / gridSize);
+
+    ctx.fillStyle = c.style.background || "transparent";
+    ctx.fillRect(x, y, 1, 1);
+  });
+
+  const link = document.createElement("a");
+  link.download = "pixel-art.png";
+  link.href = canvas.toDataURL();
+  link.click();
+};
+
+
+/* ===============================
+   Event Listeners
+================================*/
+window.addEventListener("mousedown", () => (painting = true));
+window.addEventListener("mouseup", () => (painting = false));
+
+gridEl.addEventListener("click", (e) => {
+  if (mode === "fill") fillArea(e.target);
+});
+
+gridSizeSlider.oninput = () => {
+  gridSize = Number(gridSizeSlider.value);
+  gridSizeLabel.innerText = gridSize;
+  gridSizeLabel2.innerText = gridSize;
+  generateGrid();
+};
+
+cellSizeSlider.oninput = () => {
+  cellSize = Number(cellSizeSlider.value);
+  cellSizeLabel.innerText = cellSize;
+  document.documentElement.style.setProperty("--cell-size", cellSize + "px");
+};
+
+colorPicker.oninput = () => {
+  colorPreview.style.background = colorPicker.value;
+};
+
+brushBtn.onclick = () => (mode = "brush");
+eraserBtn.onclick = () => (mode = "eraser");
+fillBtn.onclick = () => (mode = "fill");
+
+zoomSlider.oninput = () => {
+  gridEl.style.transform = `scale(${zoomSlider.value / 100})`;
+  gridEl.style.transformOrigin = "0 0";
+};
+
+showGridCheck.onchange = () => {
+  gridEl.style.gap = showGridCheck.checked ? "1px" : "0px";
+};
+
+
+/* ===============================
+   Inisialisasi awal
+================================*/
+generateGrid();
+document.documentElement.style.setProperty("--cell-size", cellSize + "px");
+</script>
+
 </body>
 </html>
